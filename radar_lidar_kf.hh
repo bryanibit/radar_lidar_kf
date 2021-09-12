@@ -1,7 +1,11 @@
 #include "Eigen/Dense"
 #include <chrono>
 #include "kalman_filter.hh"
+#define SIMULATION 1
 struct RadarSensor{
+#if SIMULATION
+    long long time_for_simulation;
+#endif
     std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> time_stamp;
     double x;
     double y;
@@ -9,6 +13,9 @@ struct RadarSensor{
     double dy;
 };
 struct LidarSensor{
+#if SIMULATION
+    long long time_for_simulation;
+#endif
     std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> time_stamp;
     double x;
     double y;
@@ -20,9 +27,12 @@ class RadarLidarKF{
         ~RadarLidarKF() = default;
         void process_management(const RadarSensor&);
         void process_management(const LidarSensor&);
-    private:
         KalmanFilter kf_;
+    private:
         bool is_initialized_;
+#if SIMULATION
+        long long int pre_time_for_simulation;
+#endif
         std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> previous_time_stamp;
         Eigen::MatrixXd R_laser_;    // laser measurement noise
         Eigen::MatrixXd R_radar_;    // radar measurement noise

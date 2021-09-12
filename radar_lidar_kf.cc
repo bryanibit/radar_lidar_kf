@@ -2,7 +2,8 @@
 
 RadarLidarKF::RadarLidarKF(){
     // assign value to R H
-    is_initialized_ = true;
+    is_initialized_ = false;
+    pre_time_for_simulation = 0;
     previous_time_stamp = std::chrono::system_clock::now();
     R_laser_ = Eigen::MatrixXd(2, 2);
     R_radar_ = Eigen::MatrixXd(4, 4);
@@ -40,8 +41,13 @@ RadarLidarKF::RadarLidarKF(){
 template<typename T>
 void RadarLidarKF::kf_predict_process(const T& sensor){
     // assigen R H to kf_
+#if SIMULATION
+    double dt = (sensor.time_for_simulation - pre_time_for_simulation) / 1000000.0;
+    pre_time_for_simulation = sensor.time_for_simulation;
+#else    
     double dt = (sensor.time_stamp - previous_time_stamp).count();
     previous_time_stamp = sensor.time_stamp;
+#endif
     double dt_2 = dt * dt;
     double dt_3 = dt_2 * dt;
     double dt_4 = dt_3 * dt;
@@ -61,6 +67,16 @@ void RadarLidarKF::kf_predict_process(const T& sensor){
 
 }
 void RadarLidarKF::process_management(const RadarSensor& rs){
+#if SIMULATION
+    if(!is_initialized_){
+        kf_.x_ = Eigen::VectorXd(4);
+        kf_.x_ << rs.x, rs.y, 0, 0;  // x, y, vx, vy
+        pre_time_for_simulation = rs.time_for_simulation;
+        // done initializing, no need to predict or update
+        is_initialized_ = true;
+        return;
+    }
+#endif
     kf_predict_process(rs);
     // call kf_ function
     kf_.H_ = H_radar_;
@@ -70,6 +86,16 @@ void RadarLidarKF::process_management(const RadarSensor& rs){
     kf_.Update(meas_radar);
 }
 void RadarLidarKF::process_management(const LidarSensor& ls){
+#if SIMULATION
+    if(!is_initialized_){
+        kf_.x_ = Eigen::VectorXd(4);
+        kf_.x_ << ls.x, ls.y, 0, 0;  // x, y, vx, vy
+        pre_time_for_simulation = ls.time_for_simulation;
+        // done initializing, no need to predict or update
+        is_initialized_ = true;
+        return;
+    }
+#endif    
     kf_predict_process(ls);
     kf_.H_ = H_laser_;
     kf_.R_ = R_laser_;
