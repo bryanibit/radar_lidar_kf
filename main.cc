@@ -13,7 +13,7 @@ int main(){
     // process_management(data)
     
     //read measurement data
-    std::ifstream in_file("/home/ugv-yu/bryan/program_language_basic/tracking-with-Extended-Kalman-Filter/data/sample-laser-radar-measurement-data-1.txt", std::ios::in);
+    std::ifstream in_file("../data/sample-laser-radar-measurement-data-1.txt", std::ios::in);
     std::ofstream out_file("output.txt", std::ios::out);
     std::vector<MeasurementPackage> measurement_pack_list;
     std::vector<GroundTruthPackage> gt_pack_list;
